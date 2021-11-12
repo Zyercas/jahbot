@@ -4,25 +4,24 @@ import motor.motor_asyncio
 import settings
 from random import randint
 
-
 logging.basicConfig(
     format="[%(levelname) 5s/%(asctime)s] %(name)s: %(message)s", level=logging.WARNING
 )
-
 
 client = TelegramClient("jahbot", settings.API_ID, settings.API_HASH).start(
     bot_token=settings.BOT_TOKEN
 )
 client.parse_mode = "md"
 
-
 cluster = motor.motor_asyncio.AsyncIOMotorClient()
 db = cluster["jahllars"]
 
+
 async def roller():
-    jah = randint(1,2000)
-    gek = randint(1,200)
-    return({"jah": jah, "gek": gek})
+    jah = randint(1, 2000)
+    gek = randint(1, 200)
+    return {"jah": jah, "gek": gek}
+
 
 async def sync(users):
     async with await cluster.start_session() as s:
@@ -34,12 +33,13 @@ async def sync(users):
             except Exception:
                 pass
 
+
 async def retrieve_coin(user_id):
     async with await cluster.start_session() as s:
         collection = db["users"]
         res = await collection.find_one({"_id": user_id})
-        return(res)
-    
+        return res
+
 
 async def add_coin(coin, user_id):
     async with await cluster.start_session() as s:
@@ -62,14 +62,14 @@ async def listener(event):
 
 
 @client.on(events.NewMessage(incoming=True, pattern="/wallet"))
-async def fetch_wallet(event):
+async def wallet_command(event):
     res = await retrieve_coin(event.sender_id)
     rep = f"**Jahllars**: {res['jah']} \U0001F4B8\n**Gekcoins**: {res['gek']} \U0001FA99\n\nID: `{event.sender_id}`"
     await event.reply(rep)
 
 
-@client.on(events.NewMessage(incoming=True, pattern="/sync",from_users=[settings.ADMIN]))
-async def fetch_users(event):
+@client.on(events.NewMessage(incoming=True, pattern="/sync", from_users=[settings.ADMIN]))
+async def sync_command(event):
     users = await client.get_participants(event.chat_id)
     user_list = []
     for user in users:
@@ -82,13 +82,13 @@ async def fetch_users(event):
 
 
 @client.on(events.NewMessage(incoming=True, pattern="/help"))
-async def help(event):
+async def help_command(event):
     res = f"Droprates\n\n0.05% Jahllar\n0.5% Gekcoin\n\n**Probability is rolled for each message.**"
     await event.reply(res)
 
 
 @client.on(events.NewMessage(incoming=True, pattern="/start"))
-async def help(event):
+async def start_command(event):
     res = f"Add me to a group to have a chance to win free Jahllars and Gekcoins for every message you type!\n\n/help - How does the bot work?\n/wallet - Receive information about your JahBank wallet."
     await event.reply(res)
 
